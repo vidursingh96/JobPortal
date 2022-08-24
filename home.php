@@ -57,7 +57,12 @@ if (isset($_POST['submit']))
     }
 }
 ?>
-<h1 class="text-center">JOB DESCRIPTION</h1><br>
+<h1 class="text-center">JOB DESCRIPTION</h1>
+<?php if (current_user_can('administrator') || current_user_can('employer'))
+{ ?> 
+<a href="<?php echo get_template_directory_uri(); ?>/view-applicant/" class="btn btn-success btn-lg view" target="_blank">View Applicants<a>
+<?php
+} ?>  
 <h1 class="text-center"><?php echo $error; ?></h1><br>
 <table class="table align-middle mb-0 bg-white">
   <thead class="bg-light">

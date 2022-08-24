@@ -1,11 +1,4 @@
 <?php
-// enqueue style sheet
-function my_scripts() {
-
-    wp_enqueue_style( 'styles', get_template_directory_uri() . '/style.css');
-}
-add_action( 'wp_enqueue_scripts', 'my_scripts' );
-
 // Register Custom Post Type
 function CreateJob()
 {
@@ -64,119 +57,11 @@ function CreateJob()
         'publicly_queryable' => true,
         'capability_type' => 'page',
     );
+
     register_post_type('Create Jobs', $args);
 
 }
 add_action('init', 'CreateJob', 0);
-
-// Hook
-add_action('admin_menu', 'add_job_cpt_submenu_example');
-
-//admin_menu callback function
-function add_job_cpt_submenu_example()
-{
-
-    add_submenu_page('edit.php?post_type=createjobs', //$parent_slug
-    'View Applicants', //$page_title
-    'View Applicants', //$menu_title
-    'manage_options', //$capability
-    'view_applicants', //$menu_slug
-    'job_subpage_render_page'
-    //$function
-    );
-
-}
-
-//add_submenu_page callback function
-function job_subpage_render_page()
-{
-
-    echo '<h1 style="text-align:center;">View Applicants</h1>
-
-<style>
-  table {
-  border: 1px solid #ccc;
-  border-collapse: collapse;
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  table-layout: fixed;
-}
-
-table caption {
-  font-size: 1.5em;
-  margin: .5em 0 .75em;
-}
-
-table tr {
-  background-color: #f8f8f8;
-  border: 1px solid #ddd;
-  padding: .35em;
-}
-
-table th,
-table td {
-  padding: .625em;
-  text-align: center;
-}
-
-table th {
-  font-size: .85em;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-}
-</style>
-<table>
-  <thead>
-    <tr>
-      <th scope="col">Job Title</th>
-      <th scope="col">Candidate Name</th>
-      <th scope="col">Email</th>
-      <th scope="col">Current Salary</th>
-      <th scope="col">Expected Salary</th>
-      <th scope="col">Resume</th>
-    </tr>
-  </thead>
-  <tbody>';
-?>
-   <?php
-    $query = new WP_Query(array(
-        'post_type' => 'createjobs',
-        'meta_query' => array(
-            array(
-                'key' => 'applicant',
-            )
-        ) ,
-    ));
-    if ($query->have_posts())
-    {
-        while ($query->have_posts())
-        {
-            $query->the_post();
-            $data = get_post_meta(get_the_ID() , 'applicant');
-            foreach ($data as $datas)
-            {
-?>
-     <tr>
-     <?php
-                $displayname = get_user_by('id', $datas['userId'])->display_name;
-                $email = get_user_by('id', $datas['userId'])->user_email;
-?>
-      <td data-label="Job Title"><?php echo get_the_title(get_the_ID()); ?></td>
-      <td data-label="Candidate Name"><?php echo $displayname; ?></td>
-      <td data-label="Candidate Name"><?php echo $email; ?></td>
-      <td data-label="Current Salary"><?php echo $datas['current']; ?></td>
-      <td data-label="Expected Salary"><?php echo $datas['Expected']; ?></td>
-      <td data-label="Resume"><a href="<?php echo $datas['imageurl']; ?>" target="_blank">Resume</a></td>
-      </tr>
-   <?php
-            }
-        }
-        wp_reset_postdata();
-    }
-    echo '</tbody>
-</table>';
-}
 
 //Remove Roles
 remove_role('subscriber');
@@ -186,7 +71,8 @@ remove_role('author');
 
 // Add candidate Role
 add_role('candidate', __('Candidate') , array(
-    'read' => true, // Allows a user to read 
+    'read' => true, // Allows a user to read
+    
 ));
 
 // Add employee Role
@@ -200,15 +86,52 @@ add_role('employer', __('Employer') , array(
     
 ));
 
-function author_ids_by_role() {
-        global $current_user;
+// $subs->add_cap('createjobs');
+// add_submenu_page('some-parent-slug', 'Events', 'Colloqui', 'createjobs', 'events', 'ww_events');
+function author_ids_by_role()
+{
+    global $current_user;
 
-        $user_roles = $current_user->roles;
-        $user_role = array_shift($user_roles);
+    $user_roles = $current_user->roles;
+    $user_role = array_shift($user_roles);
 
-        $ids = get_users(array('role' => $user_role ,'fields' => 'ID'));
+    $ids = get_users(array(
+        'role' => $user_role,
+        'fields' => 'ID'
+    ));
 
-        return $ids;
+    return $ids;
+}
+
+add_action('admin_head-edit.php', 'job_view_button');
+
+/**
+ * Adds "job_view_button" button on module list page
+ */
+function job_view_button()
+{
+    global $current_screen;
+
+    // Not our post type, exit earlier
+    // You can remove this if condition if you don't have any specific post type to restrict to.
+    if ('createjobs' != $current_screen->post_type)
+    {
+        return;
+    }
+
+?>
+        <script type="text/javascript">
+            jQuery(document).ready( function($)
+            {
+               
+            jQuery(function () { 
+             jQuery('hr.wp-header-end').before("<a id='doc_popup' class='add-new-h2'>View Applicants</a>");
+             jQuery("a#doc_popup").attr('href','/job-portal/view-applicant'); 
+             jQuery("a#doc_popup").attr('target','_blank');                     
+         });                 
+      });
+        </script>
+    <?php
 }
 
 /**
